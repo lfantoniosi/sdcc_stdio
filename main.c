@@ -120,7 +120,7 @@ bool stdio_test()
                     curState = ST_Fail;
             break;
             case ST_DoubleReadAppend:
-                printf("Rewinding anbd double reading append update...");
+                printf("Rewinding and double reading append update...");
                 rewind(fFileSrc);
                 if (!verifyLoremIpsum(fFileSrc))
                     curState = ST_Fail;
@@ -188,7 +188,7 @@ int main(int argc, char** argv)
         {
             printf("%d : %s\n", i, argv[i]);
         }
-    } else puts("No paramters parsed");
+    } else puts("No parameters parsed");
 
     stdio_test();
 
