@@ -71,10 +71,13 @@ int ungetc ( int character, FILE * stream );
 char * tmpnam ( char * str );
 FILE * tmpfile ( void );
 
+#ifndef EXCLUDE_ERRNO
 int ferror ( FILE * stream );
 void perror ( const char * str );
 void clearerr ( FILE * stream );
+#endif /* EXCLUDE_ERRNO */
 
+#ifndef EXCLUDE_PRINTF
 int vprintf ( const char * format, va_list arg );
 int printf (const char *format, ...);
 int fprintf ( FILE * stream, const char * format, ... );
@@ -84,12 +87,15 @@ int snprintf ( char * s, size_t n, const char * format, ... );
 int vsnprintf (char * s, size_t n, const char * format, va_list arg );
 int vsprintf (char * s, const char * format, va_list arg );
 int sprintf ( char * str, const char * format, ... );
+#endif /* EXCLUDE_PRINTF */
 
+#ifndef EXCLUDE_SCANF
 int scanf( const char *format, ... );
 int sscanf(const char *ibuf, const char *fmt, ...);
 int vsscanf(const char *inp, char const *fmt0, va_list ap);
 int vfscanf ( FILE * stream, const char * format, va_list arg );
 int fscanf ( FILE * stream, const char * format, ... );
 #define eprintf(...) fprintf (stderr, __VA_ARGS__);
+#endif /* EXCLUDE_SCANF */
 
 #endif

@@ -5,9 +5,29 @@ OBJDIR = obj
 LIBDIR = lib
 INCDIR = include
 
-C_SOURCES = bdos.c stdio.c stdlib.c scanf.c printf.c errno.c
+C_SOURCES = bdos.c stdio.c stdlib.c
 ASM_SOURCES = crt0.s
 HEADERS =  types.h bdos.h stdio.h stdlib.h errno.h
+
+ifeq ($(EXCLUDE_PRINTF), true)
+	CFLAGS += -DEXCLUDE_PRINTF
+	EXCLUDE_ERRNO = true
+else
+	C_SOURCES += printf.c
+endif
+
+ifeq ($(EXCLUDE_SCANF), true)
+	CFLAGS += -DEXCLUDE_SCANF
+	EXCLUDE_ERRNO = true
+else
+	C_SOURCES += scanf.c
+endif
+
+ifeq ($(EXCLUDE_ERRNO), true)
+	CFLAGS += -DEXCLUDE_ERRNO
+else
+	C_SOURCES += errno.c
+endif
 
 C_OBJ := $(patsubst %.c, $(OBJDIR)/%.rel, $(C_SOURCES))
 ASM_OBJ := $(patsubst %.s, $(OBJDIR)/%.rel, $(ASM_SOURCES))
