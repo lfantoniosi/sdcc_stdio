@@ -62,4 +62,4 @@ $(OBJDIR)/%.rel: $(LIBDIR)/%.s
 	$(ASM) $(ASMFLAGS) -o $@ $<
 
 clean:
-	+rm *.rel *.asm *.lst *.sym *.map *.ihx main.com *.lk *.noi obj/* testsrc.txt testdst.txt
+	+$(RM) *.rel *.asm *.lst *.sym *.map *.ihx main.com *.lk *.noi obj/* testsrc.txt testdst.txt
