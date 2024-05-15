@@ -4,7 +4,7 @@
 #include "include/bdos.h"
 
 
-void bdos() __naked
+void bdos(void) __naked
 {
 	__asm
 	push	ix
@@ -16,7 +16,7 @@ void bdos() __naked
 	__endasm;
 }
 
-uchar bdos_c_read() __naked
+uchar bdos_c_read(void) __naked
 {
 	__asm
 	ld		c,#BDOS_C_READ
@@ -38,7 +38,7 @@ void bdos_c_write(uchar c) __naked
 	__endasm;
 }
 
-uchar bdos_c_rawio() __naked
+uchar bdos_c_rawio(void) __naked
 {
 	__asm
 
@@ -50,7 +50,7 @@ uchar bdos_c_rawio() __naked
 	__endasm;
 }
 
-uchar bdos_c_stat() __naked
+uchar bdos_c_stat(void) __naked
 {
 	__asm
 
@@ -61,7 +61,7 @@ uchar bdos_c_stat() __naked
 	__endasm;
 }
 
-uchar bdos_drv_allreset() __naked
+uchar bdos_drv_allreset(void) __naked
 {
 	__asm
 
@@ -85,7 +85,7 @@ uchar bdos_drv_set(uchar drive) __naked
 	__endasm;
 }
 
-uchar bdos_drv_get() __naked
+uchar bdos_drv_get(void) __naked
 {
 	__asm
 
@@ -330,7 +330,7 @@ void bdos_set_randrec(FCB* fcb, long extent)
 }
 
 
-int kbhit()
+int kbhit(void)
 {
 	if (bdos_c_stat() == 0) return 0;
 	return 1;

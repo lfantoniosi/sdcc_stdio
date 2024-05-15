@@ -20,22 +20,22 @@ typedef struct struct_FCB
 	uchar R[3];		// random record number (16-bit R[0]-R[1] with R[2] overflow)
 } FCB;
 
-int kbhit();
+int kbhit(void);
 
-void bdos();
-uchar bdos_c_read();
+void bdos(void);
+uchar bdos_c_read(void);
 void bdos_c_write(uchar c);
-uchar bdos_c_rawio();
-uchar bdos_c_stat();
-uchar bdos_drv_allreset();
-uchar bdos_drv_get();
+uchar bdos_c_rawio(void);
+uchar bdos_c_stat(void);
+uchar bdos_drv_allreset(void);
+uchar bdos_drv_get(void);
 
 bool bdos_init_fcb(FCB* fcb, const char* filename);
 void bdos_f_dmaoff(void* dmaoff);
 uchar bdos_f_open(FCB* fcb);
 uchar bdos_f_close(FCB* fcb);
 uchar bdos_f_make(FCB* fcb);
-uchar bdos_drv_get();
+uchar bdos_drv_get(void);
 uchar bdos_drv_set(uchar drive);
 uchar bdos_f_read(FCB* fcb);
 uchar bdos_f_write(FCB* fcb);

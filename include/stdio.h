@@ -35,7 +35,7 @@ extern FILE* stdout;
 extern FILE* stderr;
 
 int putchar(int c);
-int getchar();
+int getchar(void);
 int puts(const char *s);
 
 FILE * fopen ( const char * filename, const char * mode);

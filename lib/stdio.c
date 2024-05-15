@@ -26,7 +26,7 @@ FILE *stderr = NULL;
 
 int errno = EOK;
 
-void __stdio_init()
+void __stdio_init(void)
 {
 	stdin = malloc(sizeof(FILE));
 	stdin->Flags = 0;
@@ -56,7 +56,7 @@ void __stdio_init()
 	stderr->ErrNo = EOK;
 }
 
-void __stdio_deinit()
+void __stdio_deinit(void)
 {
 	fclose(stderr);
 	fclose(stdout);
@@ -72,7 +72,7 @@ int putchar(int c)
 	return c;
 }
 
-int getchar()
+int getchar(void)
 {
 	return fgetc(stdin);
 }
