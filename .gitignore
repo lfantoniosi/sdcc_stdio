@@ -1,4 +1,4 @@
-obj
+obj/*
 main.asm
 main.com
 main.ihx
@@ -8,3 +8,6 @@ main.map
 main.noi
 main.rel
 main.sym
+.vscode
+DISK/*
+

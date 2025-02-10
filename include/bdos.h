@@ -20,35 +20,33 @@ typedef struct struct_FCB
 	uchar R[3];		// random record number (16-bit R[0]-R[1] with R[2] overflow)
 } FCB;
 
-int kbhit();
 
-void bdos();
-uchar bdos_c_read();
-void bdos_c_write(uchar c);
-uchar bdos_c_rawio();
-uchar bdos_c_stat();
-uchar bdos_drv_allreset();
-uchar bdos_drv_get();
+void bdos(void) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
+char bdos_c_read(void) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
+void bdos_c_write(char) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
+char bdos_c_rawio(char) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
+char bdos_c_stat(void) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
+char bdos_drv_allreset(void) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
 
-bool bdos_init_fcb(FCB* fcb, const char* filename);
-void bdos_f_dmaoff(void* dmaoff);
-uchar bdos_f_open(FCB* fcb);
-uchar bdos_f_close(FCB* fcb);
-uchar bdos_f_make(FCB* fcb);
-uchar bdos_drv_get();
-uchar bdos_drv_set(uchar drive);
-uchar bdos_f_read(FCB* fcb);
-uchar bdos_f_write(FCB* fcb);
-uchar bdos_f_delete(FCB* fcb);
-uchar bdos_f_rename(FCB* fcb);
-uchar bdos_f_size(FCB* fcb);
-uchar bdos_f_readrand(FCB* fcb);
-uchar bdos_f_writerand(FCB* fcb);
+void bdos_f_dmaoff(void*) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
+char bdos_f_open(FCB*) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
+char bdos_f_close(FCB*) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
+char bdos_f_make(FCB*) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
+char bdos_drv_get(void) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
+char bdos_drv_set(char) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
+char bdos_f_read(FCB*) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
+char bdos_f_write(FCB*) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
+char bdos_f_delete(FCB*) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
+char bdos_f_rename(FCB*) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
+char bdos_f_size(FCB*) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
+char bdos_f_readrand(FCB*) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
+char bdos_f_writerand(FCB*) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
+char bdos_f_rnd_readout(FCB*, uint) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
 
-uchar bdos_f_rnd_readout(FCB* fcb, uint count);
-
-long bdos_get_randrec(FCB* fcb);
-void bdos_set_randrec(FCB* fcb, long extent);
+bool bdos_init_fcb(FCB*, const char*);
+long bdos_get_randrec(FCB*);
+void bdos_set_randrec(FCB*, long);
+int kbhit(void);
 
 #define BDOS 0x0005
 

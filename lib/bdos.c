@@ -4,7 +4,7 @@
 #include "include/bdos.h"
 
 
-void bdos() __naked
+void bdos(void) __naked __sdcccall(1) __preserves_regs(iyl, iyh)
 {
 	__asm
 	push	ix
@@ -16,158 +16,119 @@ void bdos() __naked
 	__endasm;
 }
 
-uchar bdos_c_read() __naked
+char bdos_c_read(void) __naked __sdcccall(1) __preserves_regs(iyl, iyh)
 {
 	__asm
 	ld		c,#BDOS_C_READ
-	call	_bdos
-	ret
+	jp		_bdos
 	__endasm;
 }
 
-void bdos_c_write(uchar c) __naked
+void bdos_c_write(char c) __naked __sdcccall(1) __preserves_regs(iyl, iyh)
 {
 	c;
 	__asm
-
 	ld 		e,a
 	ld		c,#BDOS_C_WRITE
-	call	_bdos
-
-	ret
+	jp		_bdos
 	__endasm;
 }
 
-uchar bdos_c_rawio() __naked
+char bdos_c_rawio(char c) __naked __sdcccall(1) __preserves_regs(iyl, iyh)
 {
+	c;
 	__asm
-
-	ld		e,#0xFF;
+	ld		e,a
 	ld		c,#BDOS_C_RAWIO
-	call	_bdos
-
-	ret
+	jp		_bdos
 	__endasm;
 }
 
-uchar bdos_c_stat() __naked
+char bdos_c_stat(void) __naked __sdcccall(1) __preserves_regs(iyl, iyh)
 {
 	__asm
-
 	ld		c,#BDOS_C_STAT
-	call	_bdos
-
-	ret
+	jp		_bdos
 	__endasm;
 }
 
-uchar bdos_drv_allreset() __naked
+char bdos_drv_allreset(void) __naked __sdcccall(1) __preserves_regs(iyl, iyh)
 {
 	__asm
-
 	ld		c,#BDOS_DRV_ALLRESET
-	call	_bdos
-
-	ret
+	jp		_bdos
 	__endasm;
 }
 
-uchar bdos_drv_set(uchar drive) __naked
+char bdos_drv_set(char drive) __naked __sdcccall(1) __preserves_regs(iyl, iyh)
 {
 	drive;
 	__asm
-
 	ld		e,a
 	ld		c,#BDOS_DRV_SET
-	call	_bdos
-
-	ret
+	jp		_bdos
 	__endasm;
 }
 
-uchar bdos_drv_get() __naked
+char bdos_drv_get(void) __naked __sdcccall(1) __preserves_regs(iyl, iyh)
 {
 	__asm
-
 	ld		c,#BDOS_DRV_GET
-	call	_bdos
-	ld  	l,a
-
-	ret
+	jp		_bdos
 	__endasm;
 }
 
-uchar bdos_f_open(FCB* fcb) __naked
+char bdos_f_open(FCB* fcb) __naked __sdcccall(1) __preserves_regs(iyl, iyh)
 {
 	fcb;
 	__asm
-
 	ex		de,hl
-
 	ld		c,#BDOS_F_OPEN
-	call	_bdos
-
-	ret
+	jp		_bdos
 	__endasm;
 }
 
-uchar bdos_f_close(FCB* fcb) __naked
+char bdos_f_close(FCB* fcb) __naked __sdcccall(1) __preserves_regs(iyl, iyh)
 {
 	fcb;
 	__asm
-
 	ex 		de,hl
-
 	ld		c,#BDOS_F_CLOSE
-	call	_bdos
-
-	ret
+	jp		_bdos
 	__endasm;
 }
 
-uchar bdos_f_make(FCB* fcb) __naked
+char bdos_f_make(FCB* fcb) __naked __sdcccall(1) __preserves_regs(iyl, iyh)
 {
 	fcb;
 	__asm
-
 	ex 		de,hl
-
 	ld		c,#BDOS_F_MAKE
-	call	_bdos
-
-	ret
+	jp		_bdos
 	__endasm;
 }
 
-void bdos_f_dmaoff(void* dmaoff) __naked
+void bdos_f_dmaoff(void* offset) __naked __sdcccall(1) __preserves_regs(iyl, iyh)
 {
-	dmaoff;
+	offset;
 	__asm
-
 	ex 		de,hl
-
 	ld		c,#BDOS_F_DMAOFF
-	call	_bdos
-
-	ret
+	jp		_bdos
 	__endasm;
 }
 
-uchar bdos_f_read(FCB* fcb) __naked
+char bdos_f_read(FCB* fcb) __naked __sdcccall(1) __preserves_regs(iyl, iyh)
 {
 	fcb;
 	__asm
-
 	ex 		de,hl
-
 	ld		c,#BDOS_F_READ
-	call	_bdos
-
-	ret
+	jp		_bdos
 	__endasm;
 }
 
-uchar bdos_f_rnd_readout(FCB* fcb, uint count) __naked
+char bdos_f_rnd_readout(FCB* fcb, uint count) __naked __sdcccall(1) __preserves_regs(iyl, iyh)
 {
 	fcb; count;
 	__asm
@@ -191,88 +152,63 @@ uchar bdos_f_rnd_readout(FCB* fcb, uint count) __naked
 	__endasm;
 }
 
-uchar bdos_f_write(FCB* fcb) __naked
+char bdos_f_write(FCB* fcb) __naked __sdcccall(1) __preserves_regs(iyl, iyh)
 {
 	fcb;
 	__asm
-
 	ex 		de,hl
-
 	ld		c,#BDOS_F_WRITE
-	call	_bdos
-
-	ret
+	jp		_bdos
 	__endasm;
 }
 
-uchar bdos_f_delete(FCB* fcb) __naked
+char bdos_f_delete(FCB* fcb) __naked __sdcccall(1) __preserves_regs(iyl, iyh)
 {
 	fcb;
 	__asm
-
 	ex 		de,hl
-
 	ld		c,#BDOS_F_DELETE
-	call	_bdos
-
-	ret
+	jp		_bdos
 	__endasm;
 }
 
-uchar bdos_f_rename(FCB* fcb) __naked
+char bdos_f_rename(FCB* fcb) __naked __sdcccall(1) __preserves_regs(iyl, iyh)
 {
 	fcb;
 	__asm
-
 	ex 		de,hl
-
 	ld		c,#BDOS_F_RENAME
-	call	_bdos
-
-	ret
+	jp		_bdos
 	__endasm;
 }
 
-
-uchar bdos_f_size(FCB* fcb) __naked
+char bdos_f_size(FCB* fcb) __naked __sdcccall(1) __preserves_regs(iyl, iyh)
 {
 	fcb;
 	__asm
-
 	ex 		de,hl
-
 	ld		c,#BDOS_F_SIZE
-	call	_bdos
-
-	ret
+	jp		_bdos
 	__endasm;
 }
 
-uchar bdos_f_readrand(FCB* fcb) __naked
+char bdos_f_readrand(FCB* fcb) __naked __sdcccall(1) __preserves_regs(iyl, iyh)
 {
 	fcb;
 	__asm
-
 	ex 		de,hl
-
 	ld		c,#BDOS_F_READRAND
-	call	_bdos
-
-	ret
+	jp		_bdos
 	__endasm;
 }
 
-uchar bdos_f_writerand(FCB* fcb) __naked
+char bdos_f_writerand(FCB* fcb) __naked __sdcccall(1) __preserves_regs(iyl, iyh)
 {
 	fcb;
 	__asm
-
 	ex 		de,hl
-
 	ld		c,#BDOS_F_WRITERAND
-	call	_bdos
-
-	ret
+	jp		_bdos
 	__endasm;
 }
 
@@ -329,8 +265,7 @@ void bdos_set_randrec(FCB* fcb, long extent)
 	fcb->R[2] = (uchar)((extent >> 16) & 0xFF);
 }
 
-
-int kbhit()
+int kbhit(void)
 {
 	if (bdos_c_stat() == 0) return 0;
 	return 1;

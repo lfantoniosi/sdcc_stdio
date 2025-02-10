@@ -1,196 +1,313 @@
-#include<stdio.h>
-#include<string.h>
-
-#ifndef _PC_BUILD_
-
-#include "include/types.h"
-#include "include/bdos.h"
+#ifdef __SDCC__
 #include "include/stdio.h"
+#include "include/errno.h"
 #else
-#include <stdbool.h>
+#include <stdio.h>
+#include <errno.h>
 #endif
+#include <string.h>
 
-const char loremIpsum[] = "<<Lorem ipsum dolor sit amet. Eos corrupti ipsam in obcaecati molestias et quisquam quasi sit amet molestias "     \
-                          "et doloremque quis! In cupiditate commodi ut odio nisi sit aspernatur ipsa vel dolores consectetur ut galisum "  \
-                          "quia.\n\r\n\rSed soluta tempore non quaerat maiores aut commodi autem in autem placeat! Nam molestias eius vel "    \
-                          "quasi quia sit ratione facere et possimus excepturi est facilis quia et consequatur officiis ea ducimus "        \
-                          "velit.\n\r\n\rSit autem odio et consequatur iusto ut consequatur odit et voluptatem accusantium a eveniet "         \
-                          "temporibus et veritatis voluptates et saepe voluptatem. Et aspernatur natus et dolores repudiandae est "         \
-                          "rerum veritatis ea recusandae dicta et iste nesciunt. Et ipsa fugit quo illo incidunt 33 alias odit. Aut "       \
-                          "enim dolorum id ipsam nihil in nihil suscipit rem nisi eligendi.>>\n\r\n\r\n\r";
-
-bool writeLoremIpsum(FILE* stream)
-{
-    const char* p;
-    for(p = loremIpsum; *p; p++)
-    {
-        if (fputc(*p, stream) == EOF)
-            return false;
-    }
-
-    return true;
-}
-
-bool verifyLoremIpsum(FILE* stream)
-{
-    const char* p;
+void test_stdio_functions(void) {
+    FILE *file;
+    char buffer[1024]; // Large enough to hold the entire text
+    fpos_t pos;
     int c;
-    for(p = loremIpsum; *p; )
-    {
-        c = fgetc(stream);
 
-        if (c == EOF || c != *p)
-            return false;
+    // Test putchar and getchar
+    puts("Testing putchar and getchar.");
+    puts("Press a key");
+    putchar('>');
+    c = getchar();
+    puts("");
+    printf("Character read: %c\n", c);
 
-        p++;
+    // Test puts
+    puts("Testing puts");
+    puts("Hello, World!");
+
+    // Test fopen, fwrite, fclose
+    puts("Testing fopen, fwrite, and fclose");
+    puts("Creating testfile.txt");
+    file = fopen("testfile.txt", "w");
+    if (file == NULL) {
+        perror("fopen");
+        return;
+    } else {
+        printf("fopen:OK\n");
     }
 
-    return true;
-}
+    const char *text = "Hello, World!";
+    size_t written = fwrite(text, sizeof(char), strlen(text), file);
+    if (written != strlen(text)) {
+        perror("fwrite");
+    } else {
+        printf("fwrite:OK\n");
+    }
+    if (fclose(file) != 0) {
+        perror("fclose");
+    } else {
+        printf("fclose:OK\n");
+    }
 
-enum {
-    ST_AppendCreate,
-    ST_AppendReadEOF,
-    ST_AppendWrite,
-    ST_AppendCloseAndReopen,
-    St_ReadAppend,
-    ST_RewindAppendAndRead,
-    ST_AppendMore,
-    ST_DoubleReadAppend,
-    ST_CreateWriteUpdate,
-    ST_CopyFromAppendToWrite,
-    ST_ScanFirstWords,
-    ST_End,
-    ST_Fail,
-};
+    // Test longer write
+    puts("Testing longer write");
+    file = fopen("testfile.txt", "w");
+    if (file == NULL) {
+        perror("fopen");
+        return;
+    }
+    const char *long_text = "This is a longer text to test fwrite with more data. "
+                            "It should be written to the file correctly. "
+                            "This text is intentionally made longer than 128 characters "
+                            "to test the buffer size and ensure that fwrite handles it correctly.";
+    written = fwrite(long_text, sizeof(char), strlen(long_text), file);
+    if (written != strlen(long_text)) {
+        perror("fwrite");
+    } else {
+        printf("fwrite:OK\n");
+    }
+    if (fclose(file) != 0) {
+        perror("fclose");
+    } else {
+        printf("fclose:OK\n");
+    }
 
-int curState = ST_AppendCreate;
-FILE* fFileSrc = NULL;
-FILE* fFileDst = NULL;
+    // Test freopen, fread, feof, fseek, ftell, fgetpos, fsetpos, rewind
+    puts("Testing freopen, fread, feof, fseek, ftell, fgetpos, fsetpos, and rewind");
+    file = fopen("testfile.txt", "r");
+    if (file == NULL) {
+        perror("fopen");
+        return;
+    }
+    file = freopen("testfile.txt", "r", file);
+    if (file == NULL) {
+        perror("freopen");
+        return;
+    }
+    size_t read = fread(buffer, sizeof(char), sizeof(buffer) - 1, file);
+    if (read == 0 && ferror(file)) {
+        perror("fread");
+    } else {
+        printf("fread:OK\n");
+    }
+    buffer[read] = '\0';
+    printf("Read from file: %s\n", buffer);
+    if (strcmp(buffer, long_text) == 0) {
+        printf("fread content:OK\n");
+    } else {
+        printf("fread content:ERROR!\n");
+    }
+    if (fseek(file, 0, SEEK_SET) != 0) {
+        perror("fseek");
+    } else {
+        printf("fseek:OK\n");
+    }
+    if (ftell(file) != 0) {
+        perror("ftell");
+    } else {
+        printf("ftell:OK\n");
+    }
+    if (fgetpos(file, &pos) != 0) {
+        perror("fgetpos");
+    } else {
+        printf("fgetpos:OK\n");
+    }
+    if (fsetpos(file, &pos) != 0) {
+        perror("fsetpos");
+    } else {
+        printf("fsetpos:OK\n");
+    }
+    rewind(file);
+    if (feof(file)) {
+        perror("feof");
+    } else {
+        printf("feof:OK\n");
+    }
+    if (fclose(file) != 0) {
+        perror("fclose");
+    } else {
+        printf("fclose:OK\n");
+    }
 
-bool stdio_test()
-{
-    int c;
-    char buf[200];
-    char word1[50], word2[50], word3[50];
-    while(curState != ST_End && curState != ST_Fail)
-    {
-        switch (curState)
-        {
-            case ST_AppendCreate:
-                remove("testsrc.txt");
-                remove("testdst.txt");
-                printf("Create append file testsrc.txt...");
-                if (!(fFileSrc = fopen("testsrc.txt", "a")))
-                    curState = ST_Fail;
-            break;
-            case ST_AppendReadEOF:
-                printf("Reading from created append file...");
-                if (fgetc(fFileSrc) != EOF)
-                    curState = ST_Fail;
-            break;
-            case ST_AppendWrite:
-                printf("Writing to append file...");
-                if (!writeLoremIpsum(fFileSrc))
-                    curState = ST_Fail;
-            break;
-            case ST_AppendCloseAndReopen:
-                printf("Closing and reopening append update file testsrc.txt...");
-                if (fclose(fFileSrc))
-                    curState = ST_Fail;
-                else 
-                    if (!(fFileSrc = fopen("testsrc.txt", "a+")))
-                        curState = ST_Fail;                    
-            break;
-            case St_ReadAppend:
-                printf("Reading from append update file...");
-                if (!verifyLoremIpsum(fFileSrc))
-                    curState = ST_Fail;
-            break;
-            case ST_RewindAppendAndRead:
-                printf("Rewinding append update and re-read...");
-                rewind(fFileSrc);
-                if (!verifyLoremIpsum(fFileSrc))
-                    curState = ST_Fail;
-            break;
-            case ST_AppendMore:
-                printf("Rewinding while appending more...");
-                rewind(fFileSrc);
-                if (!writeLoremIpsum(fFileSrc))
-                    curState = ST_Fail;
-            break;
-            case ST_DoubleReadAppend:
-                printf("Rewinding and double reading append update...");
-                rewind(fFileSrc);
-                if (!verifyLoremIpsum(fFileSrc))
-                    curState = ST_Fail;
-                if (!verifyLoremIpsum(fFileSrc))
-                    curState = ST_Fail;                
-            break;
-            case ST_CreateWriteUpdate:
-                printf("Creating testdst.txt file...");           
-                if (!(fFileDst = fopen("testdst.txt", "wb")))
-                   curState = ST_Fail;              
-            break;
-            case ST_CopyFromAppendToWrite:
-                printf("Copying from testsrc.txt to testdst.txt...");
-                rewind(fFileSrc);
-                while(!feof(fFileSrc))
-                {
-                    int n = fread(buf, 1, 200, fFileSrc);
-                    if (fwrite(buf, 1, n, fFileDst) != n)
-                    {
-                        curState = ST_Fail;
-                        break;                    
-                    }                    
-                }
-            break;
-            case ST_ScanFirstWords:
-                rewind(fFileSrc);
-                printf("Scanning first words from file...");
-                if (fgets(buf, 200, fFileSrc))
-                {
-                    sscanf(buf, "%s %s %s", word1, word2, word3);
-                    printf("(%s) (%s) (%s).", word1, word2, word3);
-                }
-                else curState = ST_Fail;             
-          }
+    // Test longer read
+    puts("Testing longer read");
+    file = fopen("testfile.txt", "r");
+    if (file == NULL) {
+        perror("fopen");
+        return;
+    }
+    read = fread(buffer, sizeof(char), sizeof(buffer) - 1, file);
+    if (read == 0 && ferror(file)) {
+        perror("fread");
+    } else {
+        printf("fread:OK\n");
+    }
+    buffer[read] = '\0';
+    printf("Read from file: %s\n", buffer);
+    if (strcmp(buffer, long_text) == 0) {
+        printf("fread content:OK\n");
+    } else {
+        printf("fread content:ERROR!\n");
+    }
+    if (fclose(file) != 0) {
+        perror("fclose");
+    } else {
+        printf("fclose:OK\n");
+    }
 
-        if (curState != ST_Fail)
-        {
-            puts("Ok");
-            curState++;
+    // Test remove, rename
+    puts("Testing remove and rename");
+    if (rename("testfile.txt", "renamed.txt") != 0) {
+        perror("rename");
+    } else {
+        file = fopen("renamed.txt", "r");
+        if (file == NULL)            
+            printf("rename:ERROR!\n");
+        else {
+            printf("rename:OK\n");
+            fclose(file);
         }
-        else
-        {
-            puts("FAILED");
+    }
+    if (remove("renamed.txt") != 0) {
+        perror("remove");
+    } else {
+        file = fopen("renamed.txt", "r");
+        if (file == NULL)            
+            printf("remove:OK\n");
+        else {
+            printf("remove:ERROR!\n");
+            fclose(file);
         }
     }
 
-    fclose(fFileSrc);
-    fclose(fFileDst);
+    // Test setbuf, setvbuf, fflush
+    puts("Testing setbuf, setvbuf, and fflush");
+    file = fopen("testfile.txt", "w+");
+    if (file == NULL) {
+        perror("fopen");
+        return;
+    }
+    setbuf(file, buffer);
+    if (setvbuf(file, buffer, _IOFBF, BUFSIZ) != 0) {
+        perror("setvbuf");
+    } else {
+        printf("setvbuf:OK\n");
+    }
+    if (fflush(file) != 0) {
+        perror("fflush");
+    } else {
+        printf("fflush:OK\n");
+    }
+    if (fclose(file) != 0) {
+        perror("fclose");
+    } else {
+        printf("fclose:OK\n");
+    }
 
-    return curState == ST_End;
+    // Test fputs, fputc, fgetc, fgets
+    puts("Testing fputs, fputc, fgetc, and fgets");
+    file = fopen("testfile.txt", "w+");
+    if (file == NULL) {
+        perror("fopen");
+        return;
+    }
+    if (fputs("Hello, World!", file) == EOF) {
+        perror("fputs");
+    } else {
+        printf("fputs:OK\n");
+    }
+    if (fputc('A', file) == EOF) {
+        perror("fputc");
+    } else {
+        printf("fputc:OK\n");
+    }
+    if (fseek(file, 0, SEEK_SET) != 0) {
+        perror("fseek");
+    } else {
+        printf("fseek:OK\n");
+    }
+    c = fgetc(file);
+    if (c == EOF) {
+        perror("fgetc");
+    } else {
+        putchar(c);
+        printf("fgetc:OK\n");
+    }
+    if (fgets(buffer, BUFSIZ, file) == NULL) {
+        perror("fgets");
+    } else {
+        printf("Read from file: %s\n", buffer);
+        printf("fgets:OK\n");
+    }
+    if (fclose(file) != 0) {
+        perror("fclose");
+    } else {
+        printf("fclose:OK\n");
+    }
+
+    // Test edge cases
+    puts("Testing edge cases");
+
+    // fopen with invalid mode
+    puts("Testing fopen with invalid mode");
+    file = fopen("testfile.txt", "invalid_mode");
+    if (file == NULL) {
+        perror("fopen with invalid mode");
+    } else {
+        printf("fopen with invalid mode:OK\n");
+    }
+
+    // remove with non-existent file
+    puts("Testing remove with non-existent file");
+    if (remove("non_existent_file.txt") != 0) {
+        perror("remove non-existent file");
+    } else {
+        printf("remove non-existent file:OK\n");
+    }
+
+    // rename with non-existent file
+    puts("Testing rename with non-existent file");
+    if (rename("non_existent_file.txt", "new_name.txt") != 0) {
+        perror("rename non-existent file");
+    } else {
+        printf("rename non-existent file:OK\n");
+    }
+
+    // setbuf with NULL pointer
+    puts("Testing setbuf with NULL pointer");
+    file = fopen("testfile.txt", "r+");
+    if (file != NULL) {
+        setbuf(file, NULL);
+        printf("setbuf:OK\n");
+        fclose(file);
+    }
+
+    // setvbuf with invalid mode
+    puts("Testing setvbuf with invalid mode");
+    file = fopen("testfile.txt", "r+");
+    if (file != NULL) {
+        if (setvbuf(file, buffer, -1, BUFSIZ) != 0) {
+            perror("setvbuf with invalid mode");
+        } else {
+            printf("setvbuf with invalid mode:OK\n");
+        }
+        fclose(file);
+    }
+
+    // fseek with invalid origin
+    puts("Testing fseek with invalid origin");
+    file = fopen("testfile.txt", "r+");
+    if (file != NULL) {
+        if (fseek(file, 0, -1) != 0) {
+            perror("fseek with invalid origin");
+        } else {
+            printf("fseek with invalid origin:OK\n");
+        }
+        fclose(file);
+    }
 }
 
-
-int main(int argc, char** argv)
-{
-    int num;
-    argc; argv;
-
-    printf("STDIO lib for SDCC\n");
-
-    if (argc > 1)
-    {
-        printf("%d parameters parsed:\n", argc-1);
-        for(int i = 1; i < argc; i++)
-        {
-            printf("%d : %s\n", i, argv[i]);
-        }
-    } else puts("No parameters parsed");
-
-    stdio_test();
-
+int main(void) {
+    test_stdio_functions();
     return 0;
 }

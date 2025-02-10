@@ -14,7 +14,7 @@ ASM_OBJ := $(patsubst %.s, $(OBJDIR)/%.rel, $(ASM_SOURCES))
 OBJECTS = $(ASM_OBJ) $(C_OBJ)
 INCLUDES := $(patsubst %.h, $(INCDIR)/%.h, $(HEADERS))
 
-CFLAGS = -mz80 --opt-code-size --std-sdcc11 -I./
+CFLAGS = -mz80 --opt-code-size --std-sdcc11 -I./ -D__SDCC__
 
 %.asm : %.c
 	$(CC) $(CFLAGS) -S $<
@@ -22,7 +22,7 @@ CFLAGS = -mz80 --opt-code-size --std-sdcc11 -I./
 main.com: $(OBJECTS) main.rel
 	$(CC) $(CFLAGS) --data-loc 0 --code-loc 0x200 --no-std-crt0 $^ -omain.ihx
 	hex2bin -e com main.ihx
-	#cp main.com ../stdiodsk/main.com
+	-cp main.com DISK/MAIN.COM
 
 all: main.com
 
@@ -42,4 +42,4 @@ $(OBJDIR)/%.rel: $(LIBDIR)/%.s
 	$(ASM) $(ASMFLAGS) -o $@ $<
 
 clean:
-	+rm *.rel *.asm *.lst *.sym *.map *.ihx main.com *.lk *.noi obj/* testsrc.txt testdst.txt
+	-rm *.rel *.asm *.lst *.sym *.map *.ihx main.com *.lk *.noi obj/*

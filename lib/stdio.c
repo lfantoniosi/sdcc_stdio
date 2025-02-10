@@ -26,7 +26,7 @@ FILE *stderr = NULL;
 
 int errno = EOK;
 
-void __stdio_init()
+void __stdio_init(void)
 {
 	stdin = malloc(sizeof(FILE));
 	stdin->Flags = 0;
@@ -56,7 +56,7 @@ void __stdio_init()
 	stderr->ErrNo = EOK;
 }
 
-void __stdio_deinit()
+void __stdio_deinit(void)
 {
 	fclose(stderr);
 	fclose(stdout);
@@ -72,7 +72,7 @@ int putchar(int c)
 	return c;
 }
 
-int getchar()
+int getchar(void)
 {
 	return fgetc(stdin);
 }
@@ -121,6 +121,7 @@ FILE* fopen_internal ( const char * filename, const char * mode, FILE* stream)
 	if (stream && stream->DMABuf == 0) {
 		stream->DMABuf = (char*) malloc(BUFSIZ);
 		ownbuf = true;
+		stream->BufMode = _IOFBF; // fully buffered
 	}
 
 	if (stream  && stream->DMABuf)
@@ -182,13 +183,13 @@ FILE* fopen_internal ( const char * filename, const char * mode, FILE* stream)
 									// read last block and look for EOL
 									if (bdos_f_readrand(&stream->FCB) == 0)
 									{
-										for(int i = 0; i < BUFSIZ; i++)
+										for(size_t i = 0; i < BUFSIZ; i++)
 										{
 											stream->DMAPtr = i;
 
 											if (stream->DMABuf[i] == TEXT_EOF) // text EOL
 											{
-												stream->FileSize -= (127 - i);
+												stream->FileSize -= (BUFSIZ - 1 - i);
 												stream->FileSize = MAX(stream->FileSize - 1, 0); // ignore the TEXT_EOF
 												break;
 											}
@@ -198,7 +199,7 @@ FILE* fopen_internal ( const char * filename, const char * mode, FILE* stream)
 								else 
 								{
 									// binary stream, assume end of the block
-									stream->DMAPtr = 127;
+									stream->DMAPtr = BUFSIZ - 1;
 								}
 							}
 
@@ -377,7 +378,6 @@ int fputc_internal ( int character, FILE * stream ) _REENTRANT
 {
 	if ( (stream->Type == STREAM_STDOUT || stream->Type == STREAM_STDERR) && ((stream->Flags & FILE_OPEN) == 0) )
 	{
-
 		bdos_c_write((char)character);
 
 		if (character == '\n')
@@ -409,7 +409,7 @@ int fputc_internal ( int character, FILE * stream ) _REENTRANT
 				stream->SeekPos = stream->FileSize;	// appends at the end of the file
 			else stream->SeekPos++;
 
-			if (stream->DMAPtr == BUFSIZ)
+			if ((stream->DMAPtr == BUFSIZ || stream->BufMode == _IONBF) || (stream->BufMode == _IOLBF && character == '\n'))
 			{
 				if (fflush(stream))
 					return EOF;
@@ -461,7 +461,7 @@ int fgetc ( FILE * stream ) _REENTRANT
 		bdos_f_dmaoff(stream->DMABuf);
 		if (bdos_f_readrand(&stream->FCB) == 0)
 		{
-			stream->DMAPtr = (stream->SeekPos) & 0x7F;
+			stream->DMAPtr = (stream->SeekPos) & (BUFSIZ - 1);
 			stream->SeekPos++;
 			return (stream->DMABuf[stream->DMAPtr++]);
 		}
@@ -483,7 +483,7 @@ int fflush ( FILE * stream )
 			{
 				stream->Flags &= ~FILE_DIRTY;
 				memset(stream->DMABuf, TEXT_EOF, BUFSIZ);
-				stream->DMAPtr = (stream->SeekPos) & 0x7F;
+				stream->DMAPtr = (stream->SeekPos) & (BUFSIZ - 1);
 				bdos_set_randrec(&stream->FCB, stream->SeekPos);
 				bdos_f_readrand(&stream->FCB);
 				return 0;
@@ -493,7 +493,7 @@ int fflush ( FILE * stream )
 		{
 			if (stream->Flags & FILE_APPEND)
 				stream->SeekPos = stream->FileSize;
-			stream->DMAPtr = (stream->SeekPos) & 0x7F;
+			stream->DMAPtr = (stream->SeekPos) & (BUFSIZ - 1);
 			bdos_f_dmaoff(stream->DMABuf);		
 			bdos_set_randrec(&stream->FCB, stream->SeekPos);
 			bdos_f_readrand(&stream->FCB);
@@ -655,9 +655,22 @@ void setbuf ( FILE * stream, char * buffer )
 
 int setvbuf ( FILE * stream, char * buffer, int mode, size_t size )
 {
-	(stream); (buffer); (mode); (size);
-	// NOT SUPPORTED
 	errno = EOPNOTSUPP;
+	if (size == BUFSIZ)
+	{
+		switch(mode)
+		{
+			case _IOFBF:
+			case _IOLBF:
+			case _IONBF:
+				setbuf(stream, buffer);
+				stream->BufMode = mode;
+				errno = EOK;
+			break;
+			default:
+			break;
+		}
+	}
 	return errno;
 }
 
@@ -716,7 +729,7 @@ int rename ( const char * oldname, const char * newname )
 		if (bdos_init_fcb(&to, newname))
 		{
 			char* c = (char*)&from;
-			memcpy(c + 16, to.F, 11);
+			memcpy(c + 17, to.F, 11);
 			errno = bdos_f_rename(&from);
 		}
 	}

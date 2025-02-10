@@ -13,7 +13,8 @@ typedef struct struct_FILE
     long    FileSize;
     uchar   Flags;
     uchar   Type;
-    uchar   DMAPtr;
+    uchar   BufMode;
+    size_t  DMAPtr;
     errno_t ErrNo;
     char*   DMABuf;
 } FILE;
@@ -28,6 +29,10 @@ typedef struct struct_FILE
 #define FOPEN_MAX    32
 #define TMP_MAX      25 
 
+#define _IOFBF 0
+#define _IOLBF 1
+#define _IONBF 2
+
 typedef long fpos_t;
 
 extern FILE* stdin;
@@ -35,7 +40,7 @@ extern FILE* stdout;
 extern FILE* stderr;
 
 int putchar(int c);
-int getchar();
+int getchar(void);
 int puts(const char *s);
 
 FILE * fopen ( const char * filename, const char * mode);
