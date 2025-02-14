@@ -58,6 +58,20 @@ void test_fgetc(FILE *file, const char *str, int count) {
     printf(":OK (%d) chars put\n", count);
 }
 
+void test_copy_file(FILE *file1, FILE *file2) {
+    printf("Testing copy file...");
+    int count = 0;
+    while(!feof(file1)) {
+        int c = fgetc(file1);
+        if (c != EOF) {
+            count++;
+            fputc(c, file2);
+        }        
+    }
+    printf(":OK (%d) chars copieddir
+    \n", count);
+}
+
 void test_stdio_functions(void) {
     FILE *file1, *file2;
     const char* text1 = "<Text1>Hello, World! This is a very long text made exclusively for testing the stdio functions. It should be written and read to the file correctly. It was made large enough on purpose to test the 128 bytes extents on CP/M rand make sure it works fine!</Text1>";
@@ -66,6 +80,7 @@ void test_stdio_functions(void) {
 
     file1 = test_fopen("test0.txt", "w");
     fputc('a', file1);
+    fputc(0x1A, file1);
     fclose(file1);
 
 
@@ -124,12 +139,17 @@ void test_stdio_functions(void) {
     test_fgetc(file1, text3, strlen(text3));
     fclose(file1);
 
-    file1 = test_fopen("test3.txt", "w+");
-    test_fputc(file1, text1, 128);
-    fseek(file1, 0, SEEK_SET);
-    test_fgetc(file1, text1, 128);
+    file2 = test_fopen("test3.txt", "w");
+    file1 = test_fopen("test2.txt", "r");
+    test_copy_file(file1, file2);
     fclose(file1);
+    fclose(file2);
 
+    file1 = test_fopen("test3.txt", "r");
+    test_fgetc(file1, text1, strlen(text1));
+    test_fgetc(file1, text3, strlen(text3));
+    test_fgetc(file1, text3, strlen(text3));
+    fclose(file1);
 
 }
 

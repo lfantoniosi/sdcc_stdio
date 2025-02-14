@@ -671,35 +671,33 @@ int fgetpos ( FILE * stream, fpos_t * pos )
 size_t fread ( void * ptr, size_t size, size_t count, FILE * stream )
 {
 	char *p = (char *)ptr;
-	size_t cnt = 0;
-	int b;
+	int b;			
+	size_t c;
 	for(size_t c = 0; c < count; c++)
 		for(size_t s = 0; s < size; s++)
 		{
 			if ((b = fgetc(stream)) != EOF)
 			{
 				*p++ = (char)b;
-				cnt++;
 			} 
-			else return cnt;
+			else return c;
 		}
 
-	return cnt;
+	return c;
 }
 
 size_t fwrite ( const void * ptr, size_t size, size_t count, FILE * stream )
 {
 	char *p = (char *)ptr;
-	size_t cnt = 0;
+	size_t c;
 	for(size_t c = 0; c < count; c++)
 		for(size_t s = 0; s < size; s++)
 		{
 			if(fputc(*p++, stream) == EOF)	
-				return cnt;
-			cnt++;
+				return c;
 		}
 
-	return cnt;
+	return c;
 }
 
 void setbuf ( FILE * stream, char * buffer )
