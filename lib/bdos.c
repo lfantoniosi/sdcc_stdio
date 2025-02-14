@@ -16,6 +16,14 @@ void bdos(void) __naked __sdcccall(1) __preserves_regs(iyl, iyh)
 	__endasm;
 }
 
+void bdos_reset(void) __naked __sdcccall(1) __preserves_regs(iyl, iyh)
+{
+	__asm
+	ld		c,#BDOS_RESET
+	jp		_bdos
+	__endasm;
+}
+
 char bdos_c_read(void) __naked __sdcccall(1) __preserves_regs(iyl, iyh)
 {
 	__asm
@@ -128,30 +136,6 @@ char bdos_f_read(FCB* fcb) __naked __sdcccall(1) __preserves_regs(iyl, iyh)
 	__endasm;
 }
 
-char bdos_f_rnd_readout(FCB* fcb, uint count) __naked __sdcccall(1) __preserves_regs(iyl, iyh)
-{
-	fcb; count;
-	__asm
-	push	ix
-	ld		ix,#0
-	add		ix,sp
-	
-	ex		de,hl
-
-	ld		l, 4 (ix)
-	ld		h, 3 (ix)
-
-	ld		c,#BDOS_F_READOUT
-	call	_bdos
-
-	ld		l,a
-
-	ld	sp, ix
-	pop	ix
-	ret
-	__endasm;
-}
-
 char bdos_f_write(FCB* fcb) __naked __sdcccall(1) __preserves_regs(iyl, iyh)
 {
 	fcb;
@@ -212,6 +196,27 @@ char bdos_f_writerand(FCB* fcb) __naked __sdcccall(1) __preserves_regs(iyl, iyh)
 	__endasm;
 }
 
+char bdos_f_rnd_blk_wr(FCB* fcb, uint count) __naked __sdcccall(1) __preserves_regs(iyl, iyh)
+{
+	fcb; count;
+	__asm
+	ex		de,hl
+	ld		c,#BDOS_F_RNDBLKWR
+	jp		_bdos
+	__endasm;
+}
+
+uint bdos_f_rnd_blk_rd(FCB* fcb, uint count) __naked __sdcccall(1) __preserves_regs(iyl, iyh)
+{
+	fcb; count;
+	__asm
+	ex		de,hl
+	ld		c,#BDOS_F_RNDBLKRD
+	call	_bdos
+	ex 		de,hl // return records read in DE
+	ret
+	__endasm;
+}
 
 bool bdos_init_fcb(FCB* fcb, const char* filename)
 {
@@ -254,15 +259,19 @@ bool bdos_init_fcb(FCB* fcb, const char* filename)
 
 long bdos_get_randrec(FCB* fcb)
 {
-	return ( ( (long)fcb->R[0]) | ((long)fcb->R[1]) << 8 | ((long)fcb->R[2]) << 16) << 7;
+#ifdef MSXDOS1
+	return *((long*)&fcb->R[0]);
+#else
+	return (*((long*)&fcb->R[0])) << 7;
+#endif
 }
 
 void bdos_set_randrec(FCB* fcb, long extent)
 {
+#ifndef MSXDOS1
 	extent >>= 7;
-	fcb->R[0] = (uchar)(extent & 0xFF);
-	fcb->R[1] = (uchar)((extent >> 8) & 0xFF);
-	fcb->R[2] = (uchar)((extent >> 16) & 0xFF);
+#endif
+	*((long*)&fcb->R[0]) = extent;
 }
 
 int kbhit(void)

@@ -11,8 +11,17 @@ The SP stack pointer is placed right before the argv[] list and by default is se
 
 The malloc will use all the free TPA from the end of the program until the end of the stack pointer. So the space will vary from CP/M implementation.
 
-All the routines including FILE stream manipulation including redirection of stdout/stdin/stderr (freopen) are supported except by setvbuf as the file buffer cannot be different than 128 bytes (CP/M BDOS requirement).
+All the routines including FILE stream manipulation including redirection of stdout/stdin/stderr (freopen) are supported.
 
-Scanf does not support float
+*Limitations*
+
+- Scanf does not support float
+- On CP/M the files are 128-bytes extent (files are multiple of 128 bytes). Text files (created without b flag) all ghave the last bytes of the last 128 block filled as 0xA1 (EOL) - See below MSXDOS1 does not have this limitation
 
 The main.c is a test program and can be built for Pc for result comparison. Just do make pc_build and run it on PC.
+
+By default it is building as MSX1 DOS routines (support to 1-byte block) but these functions will not work in a regular CP/M machine. 
+To build as CP/M native use this:
+
+make TARGET=CPM22
+

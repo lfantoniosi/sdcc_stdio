@@ -1,5 +1,6 @@
 	.module 	crt0	
     .globl		_main
+    .globl      _exit
 	.globl 		l__DATA
 	.globl 		s__DATA
 	.globl 		l__INITIALIZER

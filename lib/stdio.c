@@ -1,8 +1,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "include/stdio.h"
 #include "include/bdos.h"
+#include "include/stdio.h"
 #include "include/stdlib.h"
 
 #define STREAM_STDOUT 0
@@ -174,38 +174,56 @@ FILE* fopen_internal ( const char * filename, const char * mode, FILE* stream)
 						if (bdos_f_size(&stream->FCB) == 0)
 						{
 							stream->FileSize = bdos_get_randrec(&stream->FCB);
+							#ifdef MSXDOS1
+							stream->FCB.RSIZE = 1;
+							// bdos_f_size is a CP/M function working with 128-byte blocks
+							if (stream->FileSize > 0)
+							{
+								stream->FileSize--;
+							}
+							stream->FileSize <<= 7;
+							#endif
 							if (stream->FileSize > 0)
 							{
 								bdos_f_dmaoff(stream->DMABuf);
-								bdos_set_randrec(&stream->FCB, stream->FileSize - 1);
-								if ((stream->Flags & FILE_BINARY) == 0) // text stream ?
-								{
-									// read last block and look for EOL
-									if (bdos_f_readrand(&stream->FCB) == 0)
+								#ifdef MSXDOS1
+									stream->FileSize &= ~(BUFSIZ-1);
+									// seek to last 128-byte block
+									bdos_set_randrec(&stream->FCB, stream->FileSize);
+									// check how many bytes are in the last block
+									stream->DMAPtr = bdos_f_rnd_blk_rd(&stream->FCB, BUFSIZ);
+									stream->FileSize += stream->DMAPtr;
+								#else
+									if ((stream->Flags & FILE_BINARY) == 0) // text stream ?
 									{
-										for(size_t i = 0; i < BUFSIZ; i++)
+										bdos_set_randrec(&stream->FCB, stream->FileSize - 1);
+										// read last block and look for EOL
+										if (bdos_f_readrand(&stream->FCB) == 0)
 										{
-											stream->DMAPtr = i;
-
-											if (stream->DMABuf[i] == TEXT_EOF) // text EOL
+											for(size_t i = 0; i < BUFSIZ; i++)
 											{
-												stream->FileSize -= (BUFSIZ - 1 - i);
-												stream->FileSize = MAX(stream->FileSize - 1, 0); // ignore the TEXT_EOF
-												break;
+												stream->DMAPtr = i;
+
+												if (stream->DMABuf[i] == TEXT_EOF) // text EOL
+												{
+													stream->FileSize -= (BUFSIZ - 1 - i);
+													stream->FileSize = MAX(stream->FileSize - 1, 0); // ignore the TEXT_EOF
+													break;
+												}
 											}
 										}
 									}
-								}
-								else 
-								{
-									// binary stream, assume end of the block
-									stream->DMAPtr = BUFSIZ - 1;
-								}
+									else 
+									{
+										// binary stream, assume end of the block
+										stream->DMAPtr = BUFSIZ - 1;
+									}
+								#endif
 							}
 
 							if ((stream->Flags & FILE_APPEND) && ((stream->Flags & FILE_UPDATE) == 0))
 							{
-									stream->SeekPos = stream->FileSize;	// non-update append always at the end of stream
+								stream->SeekPos = stream->FileSize;	// non-update append always at the end of stream
 							} 
 							else 
 							{
@@ -216,10 +234,20 @@ FILE* fopen_internal ( const char * filename, const char * mode, FILE* stream)
 								{
 									bdos_f_dmaoff(stream->DMABuf);
 									bdos_set_randrec(&stream->FCB, 0);
-									if (bdos_f_readrand(&stream->FCB)) {
-										errno = EIO;					
-										goto fopen_fail;
-									} 
+									#ifdef MSXDOS1
+										// test if can read first block
+										if (bdos_f_rnd_blk_rd(&stream->FCB, BUFSIZ) == 0)
+										{
+											errno = EIO;					
+											goto fopen_fail;
+										}
+									#else
+										// test if can read first block
+										if (bdos_f_readrand(&stream->FCB)) {
+											errno = EIO;					
+											goto fopen_fail;
+										} 
+									#endif
 								}
 							}
 						}
@@ -237,6 +265,9 @@ FILE* fopen_internal ( const char * filename, const char * mode, FILE* stream)
 							{
 								stream->Flags |= FILE_OPEN;
 								memset(stream->DMABuf, TEXT_EOF, BUFSIZ);
+								#ifdef MSXDOS1
+								stream->FCB.RSIZE = 1;
+								#endif
 							} 
 							else {
 								errno = EIO;
@@ -255,6 +286,9 @@ FILE* fopen_internal ( const char * filename, const char * mode, FILE* stream)
 					bdos_f_delete(&stream->FCB);
 					if (bdos_f_make(&stream->FCB) == 0)
 					{
+						#ifdef MSXDOS1
+						stream->FCB.RSIZE = 1;
+						#endif						
 						stream->Flags |= FILE_OPEN;
 						memset(stream->DMABuf, TEXT_EOF, BUFSIZ);
 					} 
@@ -399,21 +433,25 @@ int fputc_internal ( int character, FILE * stream ) _REENTRANT
 
 		if (stream->DMAPtr < BUFSIZ)
 		{
+			if (stream->Flags & FILE_APPEND)
+			{
+				stream->DMAPtr = stream->FileSize & (BUFSIZ - 1);
+				stream->SeekPos = stream->FileSize;
+			}
+
 			stream->DMABuf[stream->DMAPtr++] = (char) character;
 			stream->Flags |= FILE_DIRTY;
-
-			if (stream->FileSize == stream->SeekPos)
-				stream->FileSize++;		// end of the file, increment file size
-
-			if (stream->Flags & FILE_APPEND)
-				stream->SeekPos = stream->FileSize;	// appends at the end of the file
-			else stream->SeekPos++;
 
 			if ((stream->DMAPtr == BUFSIZ || stream->BufMode == _IONBF) || (stream->BufMode == _IOLBF && character == '\n'))
 			{
 				if (fflush(stream))
 					return EOF;
 			}
+
+			if (stream->FileSize == stream->SeekPos)
+				stream->FileSize++;		// end of the file, increment file size
+
+			stream->SeekPos++;
 
 			return character;
 		}
@@ -457,20 +495,30 @@ int fgetc ( FILE * stream ) _REENTRANT
 	}
 	else
 	{
-		bdos_set_randrec(&stream->FCB, stream->SeekPos);
 		bdos_f_dmaoff(stream->DMABuf);
-		if (bdos_f_readrand(&stream->FCB) == 0)
-		{
-			stream->DMAPtr = (stream->SeekPos) & (BUFSIZ - 1);
-			stream->SeekPos++;
-			return (stream->DMABuf[stream->DMAPtr++]);
-		}
+		#ifdef MSXDOS1
+			bdos_set_randrec(&stream->FCB, stream->SeekPos & ~(BUFSIZ - 1));
+			if (bdos_f_rnd_blk_rd(&stream->FCB, BUFSIZ) > 0)
+			{
+				stream->DMAPtr = (stream->SeekPos) & (BUFSIZ - 1);
+				stream->SeekPos++;
+				return (stream->DMABuf[stream->DMAPtr++]);
+			}
+		#else
+			bdos_set_randrec(&stream->FCB, stream->SeekPos);
+			if (bdos_f_readrand(&stream->FCB) == 0)
+			{
+				stream->DMAPtr = (stream->SeekPos) & (BUFSIZ - 1);
+				stream->SeekPos++;
+				return (stream->DMABuf[stream->DMAPtr++]);
+			}
+		#endif
 	}
 
 	return EOF;
 }
 
-int fflush ( FILE * stream )
+int fflush( FILE * stream )
 {
 	stream->ErrNo = EOK;
 	errno = EOK;
@@ -479,15 +527,31 @@ int fflush ( FILE * stream )
 		if (stream->Flags & FILE_DIRTY)
 		{
 			bdos_f_dmaoff(stream->DMABuf);		
-			if (bdos_f_writerand(&stream->FCB) == 0)
-			{
-				stream->Flags &= ~FILE_DIRTY;
-				memset(stream->DMABuf, TEXT_EOF, BUFSIZ);
-				stream->DMAPtr = (stream->SeekPos) & (BUFSIZ - 1);
+			#ifdef MSXDOS1
+				for(int i = 0; i < stream->DMAPtr; i++)
+				{
+					printf("%c", stream->DMABuf[i]);
+				}
+				bdos_set_randrec(&stream->FCB, stream->SeekPos & ~(BUFSIZ - 1));
+				if (bdos_f_rnd_blk_wr(&stream->FCB, stream->DMAPtr) == 0)
+				{
+					stream->Flags &= ~FILE_DIRTY;
+					stream->DMAPtr = (stream->DMAPtr) & (BUFSIZ - 1);
+					return 0;
+				} else goto fflush_fail;
+			#else
 				bdos_set_randrec(&stream->FCB, stream->SeekPos);
-				bdos_f_readrand(&stream->FCB);
-				return 0;
-			}
+				if (bdos_f_writerand(&stream->FCB) == 0)
+				{
+					stream->Flags &= ~FILE_DIRTY;
+					stream->DMAPtr = (stream->DMAPtr) & (BUFSIZ - 1);
+					if (stream->SeekPos == stream->FileSize) 
+					{
+						memset(stream->DMABuf + stream->DMAPtr, TEXT_EOF, BUFSIZ - stream->DMAPtr);
+					}
+					return 0;
+				} else goto fflush_fail;
+			#endif			
 		}
 		else
 		{
@@ -495,13 +559,19 @@ int fflush ( FILE * stream )
 				stream->SeekPos = stream->FileSize;
 			stream->DMAPtr = (stream->SeekPos) & (BUFSIZ - 1);
 			bdos_f_dmaoff(stream->DMABuf);		
-			bdos_set_randrec(&stream->FCB, stream->SeekPos);
-			bdos_f_readrand(&stream->FCB);
+			#ifdef MSXDOS1
+				bdos_set_randrec(&stream->FCB, stream->SeekPos & ~(BUFSIZ - 1));
+				bdos_f_rnd_blk_rd(&stream->FCB, stream->DMAPtr);
+			#else
+				bdos_set_randrec(&stream->FCB, stream->SeekPos);
+				bdos_f_readrand(&stream->FCB);
+			#endif
 			return 0;
 		}
 	} 
 	else return 0;
 
+fflush_fail:
 	errno = EIO;
 	stream->ErrNo = EIO;
 
@@ -647,8 +717,10 @@ void setbuf ( FILE * stream, char * buffer )
 	{
 		if ((stream->Flags & FILE_OWNBUF) == 0) 
 		{			
+			// CPM default buffer
 			stream->DMABuf = (char*)malloc(BUFSIZ);
 			stream->Flags |= FILE_OWNBUF;
+			stream->BufMode = _IONBF; // treat as unbuffered
 		}
 	}
 }

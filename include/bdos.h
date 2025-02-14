@@ -10,18 +10,20 @@ typedef struct struct_FCB
 	char  T[3];		// extension type
 	uchar EX;		// current block
 	uchar S1;		// number of blocks from the top
-	uchar S2;		// record size
-	uchar RC;		// record size
+	uint  RSIZE;	// record size
+	//uchar S2;		// record size
+	//uchar RC;		// record size
 	ulong FSIZE;	// filesize
 	uchar DATE[2];  // date last acess
 	uchar TIME[2];  // time last acess
 	uchar AL[8];	// platform independent
 	uchar CR;		// current record
-	uchar R[3];		// random record number (16-bit R[0]-R[1] with R[2] overflow)
+	uchar R[4];		// random record number (16-bit R[0]-R[1] with R[2] overflow)
 } FCB;
 
 
 void bdos(void) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
+void bdos_reset(void) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
 char bdos_c_read(void) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
 void bdos_c_write(char) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
 char bdos_c_rawio(char) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
@@ -41,7 +43,9 @@ char bdos_f_rename(FCB*) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
 char bdos_f_size(FCB*) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
 char bdos_f_readrand(FCB*) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
 char bdos_f_writerand(FCB*) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
-char bdos_f_rnd_readout(FCB*, uint) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
+// MSXDOS1
+char bdos_f_rnd_blk_wr(FCB*, uint) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
+uint  bdos_f_rnd_blk_rd(FCB*, uint) __naked __sdcccall(1) __preserves_regs(iyl, iyh);
 
 bool bdos_init_fcb(FCB*, const char*);
 long bdos_get_randrec(FCB*);
@@ -50,28 +54,30 @@ int kbhit(void);
 
 #define BDOS 0x0005
 
-
-#define BDOS_C_READ			1
-#define BDOS_C_WRITE		2
-#define BDOS_C_RAWIO		6
-#define BDOS_C_STAT			11
-#define BDOS_DRV_ALLRESET	13
-#define BDOS_DRV_SET 		14
-#define BDOS_F_OPEN 		15
-#define BDOS_F_CLOSE		16
-#define BDOS_F_SFIRST		17
-#define BDOS_F_NEXT			18
-#define BDOS_F_DELETE		19
-#define BDOS_F_READ     	20
-#define BDOS_F_WRITE    	21
-#define BDOS_F_MAKE     	22
-#define BDOS_F_RENAME   	23
-#define BDOS_DRV_GET		25
-#define BDOS_F_DMAOFF		26
-#define BDOS_F_READRAND		33
-#define BDOS_F_WRITERAND	34
-#define BDOS_F_SIZE			35
-#define BDOS_F_READOUT  	39
+#define BDOS_RESET			0x00
+#define BDOS_C_READ			0x01
+#define BDOS_C_WRITE		0x02
+#define BDOS_C_RAWIO		0x06
+#define BDOS_C_STAT			0x0B
+#define BDOS_DRV_ALLRESET	0x0D
+#define BDOS_DRV_SET 		0x0E
+#define BDOS_F_OPEN 		0x0F
+#define BDOS_F_CLOSE		0x10
+#define BDOS_F_SFIRST		0x11
+#define BDOS_F_NEXT			0x12
+#define BDOS_F_DELETE		0x13
+#define BDOS_F_READ     	0x14
+#define BDOS_F_WRITE    	0x15
+#define BDOS_F_MAKE     	0x16
+#define BDOS_F_RENAME   	0x17
+#define BDOS_DRV_GET		0x19
+#define BDOS_F_DMAOFF		0x1A
+#define BDOS_F_READRAND		0x21
+#define BDOS_F_WRITERAND	0x22
+#define BDOS_F_SIZE			0x23
+// MSXDOS1
+#define BDOS_F_RNDBLKWR		0x26
+#define BDOS_F_RNDBLKRD		0x27
 
 #define BDOS_OK						0
 #define BDOS_EOF					1

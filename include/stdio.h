@@ -25,7 +25,7 @@ typedef struct struct_FILE
 
 #define BUFSIZ       128
 #define FILENAME_MAX 13
-#define L_tmpnam     13;
+#define L_tmpnam     13
 #define FOPEN_MAX    32
 #define TMP_MAX      25 
 
@@ -95,6 +95,8 @@ int sscanf(const char *ibuf, const char *fmt, ...);
 int vsscanf(const char *inp, char const *fmt0, va_list ap);
 int vfscanf ( FILE * stream, const char * format, va_list arg );
 int fscanf ( FILE * stream, const char * format, ... );
+
+void exit(int);
 #define eprintf(...) fprintf (stderr, __VA_ARGS__);
 
 #endif

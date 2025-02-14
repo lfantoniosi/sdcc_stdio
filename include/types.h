@@ -1,6 +1,10 @@
 #ifndef _TYPES_H_
 #define _TYPES_H_
 
+#ifndef CPM22
+#define MSXDOS1
+#endif
+
 #include <stddef.h>
 
 #define true 1

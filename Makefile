@@ -14,7 +14,9 @@ ASM_OBJ := $(patsubst %.s, $(OBJDIR)/%.rel, $(ASM_SOURCES))
 OBJECTS = $(ASM_OBJ) $(C_OBJ)
 INCLUDES := $(patsubst %.h, $(INCDIR)/%.h, $(HEADERS))
 
-CFLAGS = -mz80 --opt-code-size --std-sdcc11 -I./ -D__SDCC__
+TARGET := $(if $(TARGET),-D$(TARGET),)
+
+CFLAGS = -mz80 --opt-code-size --std-sdcc11 -I./ $(TARGET)
 
 %.asm : %.c
 	$(CC) $(CFLAGS) -S $<
@@ -27,7 +29,7 @@ main.com: $(OBJECTS) main.rel
 all: main.com
 
 pc_build:
-	gcc main.c -D _PC_BUILD_ -o main
+	gcc main.c -std=c99 -o main
 
 $(OBJDIR)/%.rel: $(LIBDIR)/%.c $(INCLUDES)
 	$(CC) $(CFLAGS) -o$@ -c $<
