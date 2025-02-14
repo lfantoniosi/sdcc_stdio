@@ -1,5 +1,5 @@
 # sdcc_stdio
-Complete stdio lib implementation for SDCC compiler for CP/M-80
+Complete stdio lib implementation for SDCC compiler for MSX1 DOS or CP/M-80 (see below)
 
 This library implements the missing stdio components for SDCC Compiler v4.2 or higher.
 
@@ -16,11 +16,11 @@ All the routines including FILE stream manipulation including redirection of std
 *Limitations*
 
 - Scanf does not support float
-- On CP/M the files are 128-bytes extent (files are multiple of 128 bytes). Text files (created without b flag) all ghave the last bytes of the last 128 block filled as 0xA1 (EOL) - See below MSXDOS1 does not have this limitation
+- On CP/M the files are files are multiple of 128 bytes. Text files (files created without "b" flag) all have the last bytes of the last 128 block filled as 0xA1 (EOL). *MSX1 DOS* does not have this limitation.
 
 The main.c is a test program and can be built for Pc for result comparison. Just do make pc_build and run it on PC.
 
-By default it is building as MSX1 DOS routines (support to 1-byte block) but these functions will not work in a regular CP/M machine. 
+By default it is building as *MSX1 DOS( routines (support to 1-byte block) but these functions will not work in a regular *CP/M* machine. 
 To build as CP/M native use this:
 
 make TARGET=CPM22
